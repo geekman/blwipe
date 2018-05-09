@@ -2,8 +2,8 @@ blwipe
 =======
 
 **blwipe** is a tool that performs *cryptographic erasure* on BitLocker volumes.
-This allows you to "erase" BitLocker volumes very quickly by just rewriting 
-areas where the key material is stored on the volume.
+This allows you to "erase" BitLocker volumes very quickly by just overwriting
+areas where the key material are stored on the volume.
 
 The tool is written in Go, so it should compile into a "static" binary and 
 is easily cross-compilable.
@@ -15,8 +15,9 @@ You will need to install [Go](https://golang.org/).
 
 To download and compile *blwipe*, use `go get`:
 
-	go get https://github.com/geekman/blwipe
+	go get github.com/geekman/blwipe
 
+The `blwipe` executable should now be in your `$GOPATH/bin` directory.
 
 Usage
 ======
