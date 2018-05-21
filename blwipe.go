@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"log"
 	"os"
 )
 
@@ -150,6 +149,14 @@ func VerifySignature(b [8]byte) bool { return string(b[:]) == "-FVE-FS-" }
 
 const INFO_GUID string = "4967D63B-2E29-4AD8-8399-F6A339E3D001"
 
+func fatal(format string, a ...interface{}) {
+	if len(format) > 0 && format[len(format)-1:] != "\n" {
+		format += "\n"
+	}
+	fmt.Fprintf(os.Stderr, format, a...)
+	os.Exit(1)
+}
+
 func usage() {
 	fmt.Fprintf(os.Stderr, "usage: blwipe [flags] <bitlocker-vol.img>\n\n")
 	flag.PrintDefaults()
@@ -167,15 +174,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	log.SetFlags(0)
-
 	if *offset < 0 {
-		log.Fatal("offset cannot be negative")
+		fatal("offset cannot be negative")
 	}
 
 	f, err := os.OpenFile(flag.Arg(0), os.O_RDWR, 0644)
 	if err != nil {
-		log.Fatal("can't open file: ", err)
+		fatal("can't open file: %s", err)
 	}
 	defer f.Close()
 
@@ -183,20 +188,20 @@ func main() {
 	hdr := VolumeHeader{}
 	err = binary.Read(f, binary.LittleEndian, &hdr)
 	if err != nil {
-		log.Fatal("can't read header: ", err)
+		fatal("can't read header: %s", err)
 	}
 
 	// validate headers
 	if !VerifySignature(hdr.Signature) {
-		log.Fatalf("invalid volume header signature %q", hdr.Signature)
+		fatal("invalid volume header signature %q", hdr.Signature)
 	}
 
 	if hdr.SectorSize < 512 {
-		log.Fatalf("weird sector size: %d", hdr.SectorSize)
+		fatal("weird sector size: %d", hdr.SectorSize)
 	}
 
 	if hdr.Guid.String() != INFO_GUID {
-		log.Fatalf("unsupported GUID %v", hdr.Guid)
+		fatal("unsupported GUID %v", hdr.Guid)
 	}
 
 	for i := 0; i < len(hdr.InfoOffsets); i++ {
@@ -239,7 +244,7 @@ func main() {
 	}
 
 	if validInfoSize == 0 {
-		log.Fatal("invalid or no metadata blocks found!")
+		fatal("invalid or no metadata blocks found!")
 	}
 
 	if *doWipe {
@@ -254,7 +259,7 @@ func main() {
 			eraseBuf := make([]byte, region.Size)
 			_, err = rand.Read(eraseBuf)
 			if err != nil {
-				log.Fatalf("unable to generate rand bytes: %v", err)
+				fatal("unable to generate rand bytes: %v", err)
 				break
 			}
 
